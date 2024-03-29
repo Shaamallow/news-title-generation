@@ -1,0 +1,12 @@
+[tool.pylint."W0621"]
+# Disable "redefining name from outer scope"
+disable = "W0621"
+
+[tool.pylint."C0116"]
+# Disable "missing function docstring"
+disable = "C0116"
+
+
+[tool.pylint."C0114"]
+# Disable "missing module docstring"
+disable = "C0114"

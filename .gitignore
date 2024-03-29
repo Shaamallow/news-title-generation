@@ -1,0 +1,6 @@
+# Ignore output csv, but not the data ones
+*.csv
+!data/*.csv
+
+# Ignore pycache
+__pycache__/
