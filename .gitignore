@@ -1,5 +1,6 @@
 # Ignore output csv, but not the data ones
 *.csv
+!outputs/submissions/*.csv
 !data/*.csv
 
 # Ignore pycache

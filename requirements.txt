@@ -1,2 +1,7 @@
 pandas
 rouge-score
+torch
+transformers
+torch[transformers]
+datasets
+sentencepiece
