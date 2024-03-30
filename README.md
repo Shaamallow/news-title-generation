@@ -49,4 +49,3 @@ Edit the requirements in case something is missing
 ├── summarization_baselines.py
 └── t5_pipeline.py # Main pipeline for training and evaluation 
 ```
-```
