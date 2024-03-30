@@ -339,6 +339,7 @@ def submission_from_pretrained(
     model = AutoModelForSeq2SeqLM.from_pretrained(
         f"./outputs/{model_checkpoint}-finetuned/checkpoint-{checkpoint_number}"
     )
+    model = model.to("cuda" if torch.cuda.is_available() else "cpu")
 
     # Generate the submission
     t5_summary_kaggle = t5_summary(test_df["text"], t5_tokenizer, model)  # type: ignore
