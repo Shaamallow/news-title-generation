@@ -268,7 +268,10 @@ def train_model_from_checkpoint(model_checkpoint: str):
 
 
 def t5_summary(
-    text: pd.Series, t5_tokenizer: PreTrainedTokenizer, model: AutoModelForSeq2SeqLM
+    text: pd.Series,
+    t5_tokenizer: PreTrainedTokenizer,
+    model: AutoModelForSeq2SeqLM,
+    batch_size: int = 64,
 ):
     """Generate summaries using the T5 model
 
@@ -283,17 +286,22 @@ def t5_summary(
     - summaries : List[Tuple[int, str]] : A list of Tuples containing the index of the text and the summary generated using the T5 model
     """
     summaries = []
-    for idx, row in tqdm(text.items()):
-        input_text = t5_tokenizer(row, return_tensors="pt").input_ids.to(model.device)
+
+    for i in tqdm(range(0, len(text), batch_size)):
+        batch = text[i : i + batch_size]
+        input_text = t5_tokenizer(
+            batch.tolist(), return_tensors="pt", padding=True, truncation=True
+        ).input_ids.to(model.device)
         output = model.generate(
             input_text,
             max_length=64,
             early_stopping=True,
             num_return_sequences=1,
         )
-        summaries.append(
-            (idx, t5_tokenizer.decode(output[0], skip_special_tokens=True))
-        )
+        for idx, out in enumerate(output):
+            summaries.append(
+                (i + idx, t5_tokenizer.decode(out, skip_special_tokens=True))
+            )
     return summaries
 
 
@@ -348,9 +356,10 @@ def submission_from_pretrained(
 def load_model(model_checkpoint: str, checkpoint_number: int):
     """Load a model from a checkpoint"""
     t5_tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
-    model = AutoModelForSeq2SeqLM.from_pretrained(
-        f"./outputs/{model_checkpoint}-finetuned/checkpoint-{checkpoint_number}"
-    )
+    # model = AutoModelForSeq2SeqLM.from_pretrained(
+    #     f"./outputs/{model_checkpoint}-finetuned/checkpoint-{checkpoint_number}"
+    # )
+    model = AutoModelForSeq2SeqLM.from_pretrained("t5-small")  # Try using the base one.
     return model, t5_tokenizer
 
 
@@ -365,9 +374,16 @@ if __name__ == "__main__":
     #
     # Load the model
     model, t5_tokenizer = load_model(BASE_MODEL, CHECKPOINT_NUMBER)
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model = model.to(device)
 
     # Generate the T5 summaries
-    t5_summaries = t5_summary(validation_df["text"], t5_tokenizer, model)  # type: ignore
+    print("Generating summary....")
+    t5_summaries = t5_summary(
+        validation_df["text"], t5_tokenizer, model, batch_size=64  # type: ignore
+    )
+    print("Done.")
+
     # Calculate the average rouge score for the T5 summaries
     t5_rouge_score = average_rouge_score(t5_summaries, validation_df["titles"], rouge)  # type: ignore
     print(f"T5 Rouge Score : {t5_rouge_score}")
