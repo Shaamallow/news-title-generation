@@ -20,7 +20,7 @@ def device():
 def simple_load(model_name: str):
     return AutoModelForSeq2SeqLM.from_pretrained(
         model_name
-    ), AutoTokenizer.from_pretrained(model_name)
+    ), AutoTokenizer.from_pretrained(model_name, legacy=False)
 
 
 def mT5_multilingual_XLSum():
