@@ -9,7 +9,7 @@ from src.load_data import load_data
 from src.load_models import device, t5_base_fr_sum_cnndm
 from src.labels import labels_classification
 
-from src.evaluation import embeddings, t5_summary
+from src.evaluation import embeddings, summary
 
 from rouge_score import rouge_scorer
 
@@ -127,12 +127,10 @@ def add_generated_title():
     DEVICE = device()
     model = model.to(DEVICE)
 
-    validation_summaries = t5_summary(
-        validation_df.text, tokenizer, model, batch_size=64
-    )
+    validation_summaries = summary(validation_df.text, tokenizer, model, batch_size=64)
 
-    for i, summary in tqdm(validation_summaries):
-        validation_df.at[i, "generated_title"] = summary
+    for i, title in tqdm(validation_summaries):
+        validation_df.at[i, "generated_title"] = title
 
     print(validation_df.head())
     validation_df.to_csv("data/validation_df_generated.csv", index=False)
