@@ -21,31 +21,42 @@ Edit the requirements in case something is missing
 
 ```bash
 .
-├── data # Source dataset
+├── data
 │   ├── test_text.csv
 │   ├── train.csv
 │   └── validation.csv
+├── docs
+│   ├── dataset_polar_visualization.png
+│   ├── labels_repartition.png
+│   ├── pca_labels_flaubert.png
+│   ├── pca_labels.png
+│   ├── pca_rouge.png
+│   ├── polar_rouge_score.png
+│   └── rouge_distribution.png
 ├── IN582_2024_Challenge.pdf
 ├── notebooks
-│   └── baseline.ipynb  # Jupyter Notebook with pipeline for t5 model training and evaluation
+│   └── baseline.ipynb
 ├── outputs
-│   ├── submissions
-│   │   ├── ext_oracle_submission.csv
-│   │   ├── lead_submission.csv
-│   │   └── t5_summary_kaggle.csv
-│   └── t5-small-finetuned # Fine-tuned model checkpoints
-│       └── checkpoint-2676 # Current best model
-│           ├── config.json
-│           ├── generation_config.json
-│           ├── model.safetensors
-│           ├── optimizer.pt
-│           ├── rng_state.pth
-│           ├── scheduler.pt
-│           ├── trainer_state.json
-│           └── training_args.bin
+│   ├── bart-base-finetuned-3 # Best BART fine-tuned model
+│   ├── submissions 
+│   ├── t5-small-finetuned # 1st T5 fine-tuned model
+│   └── t5-small-finetuned-2 # Best T5 fine-tuned model
 ├── pyproject.toml
 ├── README.md
 ├── requirements.txt
+├── run_dataset.py # Script to generate the dataset visualization plots from the report
+├── run_fine_tuning.py # Script to fine-tune the models
+├── run_submission.py # Script to generate the submissions
+├── run_test.py 
+├── src
+│   ├── evaluation.py
+│   ├── labels.py
+│   ├── load_data.py
+│   ├── load_models.py
+│   ├── metrics.py
+│   ├── __pycache__
+│   ├── submission.py
+│   └── tester.py
 ├── summarization_baselines.py
-└── t5_pipeline.py # Main pipeline for training and evaluation 
+└── t5_pipeline.py # Old script to fine-tune the T5 model
 ```
