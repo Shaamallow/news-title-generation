@@ -10,3 +10,11 @@ disable = "C0116"
 [tool.pylint."C0114"]
 # Disable "missing module docstring"
 disable = "C0114"
+
+[tool.pylint."C0103"]
+# Disable "invalid naming style"
+disable = "C0103"
+
+[tool.pylint."C0415"]
+# Disable "import outside toplevel"
+disable = "C0415"
