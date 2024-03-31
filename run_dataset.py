@@ -17,7 +17,7 @@ from sklearn.decomposition import PCA
 from matplotlib import pyplot as plt
 
 # Load model directly
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, trainer
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
 
 def generate_labels():
@@ -136,6 +136,170 @@ def add_generated_title():
     validation_df.to_csv("data/validation_df_generated.csv", index=False)
 
 
+def generate_visualization():
+    """Generate visualization of both labels and size of the text from the dataset"""
+    TRAIN_PATH = "data/train_labels.csv"
+    VALIDATION_PATH = "data/validation_labels.csv"
+    TEST_PATH = "data/test_labels.csv"
+
+    # no need for the embeddings this time
+    # each row is a point in the 2D space
+    # with an orientation defined from the labels (classes from the flaubert model)
+    # the distance from the center of the plan is defined by the size of the text
+    # add a bit of noise to the angles to avoid overlapping
+    # and the color will be the labels
+    train_df, validation_df, test_df = load_data(TRAIN_PATH, VALIDATION_PATH, TEST_PATH)
+
+    total_df = pd.concat([train_df, validation_df, test_df])
+
+    # Compute the size of the text
+    total_df["size"] = total_df["text"].apply(lambda x: len(x.split()))
+
+    # Compute the angle of the text
+    # add a bit of noise to avoid overlapping
+    classes = total_df["genre"].unique()
+    n_classes = len(classes)
+
+    N_JITTER = 0.23
+
+    total_df["angle"] = total_df["genre"].apply(
+        lambda x: 2 * 3.1415 * classes.tolist().index(x) / n_classes
+        + np.random.uniform(-N_JITTER, N_JITTER)
+    )
+
+    # Compute the distance from the center
+    total_df["distance"] = total_df["size"]
+
+    # remove the outliers
+    # total_df = total_df[total_df["distance"] < 2000]
+
+    # Now scatter plot
+    total_df["color"] = total_df["genre"].apply(lambda x: classes.tolist().index(x))
+
+    plt.rcParams["font.family"] = "cmr10"
+    plt.rc("axes", unicode_minus=False)
+
+    _ = plt.figure(figsize=(20, 10))
+    ax = plt.subplot(111, polar=True)
+
+    MAX_SIZE = 5000
+    ax.set_rlim(10, MAX_SIZE)  # type: ignore
+    ax.set_rscale("symlog")  # type: ignore
+
+    x_ticks = np.linspace(0, 2 * 3.1415, n_classes, endpoint=False)
+    y_ticks = [10, 20, 30, 40, 50, 60, 70, 80, 90]
+    y_ticks = [tick * 10**i for i in range(3) for tick in y_ticks]
+
+    y_ticks = [tick for tick in y_ticks if tick < MAX_SIZE]
+
+    ax.set_xticks(x_ticks)
+    ax.set_yticks(y_ticks)
+
+    ax.set_xticklabels(classes, fontproperties="cmr10", fontsize=15)
+
+    ax.grid(True, which="major", ls="--", color="black", alpha=0.5)
+    ax.set_axisbelow(True)
+
+    ax.scatter(
+        total_df["angle"],
+        total_df["distance"],
+        c=total_df["color"],
+        cmap="viridis",
+        alpha=0.75,
+    )
+
+    plt.title("Visualization of the dataset", fontproperties="cmr10", fontsize=20)
+    plt.savefig("docs/dataset_polar_visualization.png", bbox_inches="tight", dpi=300)
+    # plt.show()
+
+    # print(total_df.head())
+
+
+def generate_visualization_rouge():
+    """Generate Visualization for the ROUGE score, size and labels from the dataset"""
+    # no need for the embeddings this time
+    # each row is a point in the 2D space
+    # with an orientation defined from the labels (classes from the flaubert model)
+    # the distance from the center of the plan is defined by the size of the text
+    # add a bit of noise to the angles to avoid overlapping
+    # and the color will be the labels
+    TRAIN_PATH = "data/train_df_embeddings.csv"
+    VALIDATION_PATH = "data/validation_df_generated.csv"
+    TEST_PATH = "data/test_df_embeddings.csv"
+
+    # Perfom only on the validation set for proper ROUGE score (avoid overfitting on train data)
+    _, validation_df, _ = load_data(TRAIN_PATH, VALIDATION_PATH, TEST_PATH)
+
+    # Compute the rouge score for eaach title
+    SCORER = rouge_scorer.RougeScorer(["rougeL"], use_stemmer=True)
+    rouge_scores = []
+    # We will only use the fmeasure of the scorer as we are graded on the fscore avg
+    for i, row in validation_df.iterrows():
+        rouge_scores.append(
+            SCORER.score(row.generated_title, row.titles)["rougeL"].fmeasure
+        )
+
+    validation_df["rouge_score"] = rouge_scores
+    total_df = validation_df
+
+    # Compute the size of the text
+    total_df["size"] = total_df["text"].apply(lambda x: len(x.split()))
+
+    # Compute the angle of the text
+    # add a bit of noise to avoid overlapping
+    classes = total_df["genre"].unique()
+    n_classes = len(classes)
+
+    N_JITTER = 0.23
+
+    total_df["angle"] = total_df["genre"].apply(
+        lambda x: 2 * 3.1415 * classes.tolist().index(x) / n_classes
+        + np.random.uniform(-N_JITTER, N_JITTER)
+    )
+
+    # Compute the distance from the center
+    total_df["distance"] = total_df["size"]
+
+    # Now scatter plot
+    total_df["color"] = total_df["rouge_score"]
+
+    plt.rcParams["font.family"] = "cmr10"
+    plt.rc("axes", unicode_minus=False)
+
+    _ = plt.figure(figsize=(20, 10))
+    ax = plt.subplot(111, polar=True)
+
+    MAX_SIZE = 5000
+    ax.set_rlim(10, MAX_SIZE)  # type: ignore
+    ax.set_rscale("symlog")  # type: ignore
+
+    x_ticks = np.linspace(0, 2 * 3.1415, n_classes, endpoint=False)
+    y_ticks = [10, 20, 30, 40, 50, 60, 70, 80, 90]
+    y_ticks = [tick * 10**i for i in range(3) for tick in y_ticks]
+
+    y_ticks = [tick for tick in y_ticks if tick < MAX_SIZE]
+
+    ax.set_xticks(x_ticks)
+    ax.set_yticks(y_ticks)
+
+    ax.set_xticklabels(classes, fontproperties="cmr10", fontsize=15)
+
+    ax.grid(True, which="major", ls="--", color="black", alpha=0.5)
+    ax.set_axisbelow(True)
+
+    scatter = ax.scatter(
+        total_df["angle"],
+        total_df["distance"],
+        c=total_df["color"],
+        cmap="Reds",
+        alpha=0.75,
+    )
+    plt.colorbar(scatter, label="ROUGE score")
+    plt.title("Visualization ROUGE score", fontproperties="cmr10", fontsize=20)
+    plt.savefig("docs/polar_rouge_score.png", bbox_inches="tight", dpi=300)
+    # plt.show()
+
+
 def pca_analysis(save: bool = False):
     """Perform PCA analysis on the embeddings"""
 
@@ -167,7 +331,7 @@ def pca_analysis(save: bool = False):
     plt.rcParams["font.family"] = "cmr10"
     plt.rc("axes", unicode_minus=False)
 
-    _ = plt.figure(figsize=(20, 10))
+    _ = plt.figure(figsize=(10, 10))
 
     scatter = plt.scatter(X_pca[:, 0], X_pca[:, 1], c=total_df["color"], cmap="viridis")
     plt.xlabel("PCA 1", fontproperties="cmr10")
@@ -178,7 +342,7 @@ def pca_analysis(save: bool = False):
     )
     handles = scatter.legend_elements()[0]
     plt.legend(handles, classes, title="Classes", prop={"family": "cmr10"})
-    plt.savefig("docs/pca_labels.png", bbox_inches="tight", dpi=300)
+    plt.savefig("docs/pca_labels_flaubert_2.png", bbox_inches="tight", dpi=300)
     # plt.show()
 
     if save:
@@ -191,9 +355,9 @@ def pca_analysis(save: bool = False):
 
 def pca_analysis_rouge(save: bool = False):
     """Perform PCA analysis on the embeddings but color by rouge score"""
-    TRAIN_PATH = "data/train_df_embeddings.csv"
-    VALIDATION_PATH = "data/validation_df_generated.csv"
-    TEST_PATH = "data/test_df_embeddings.csv"
+    TRAIN_PATH = "data/train_df_embeddings_flaubert.csv"
+    VALIDATION_PATH = "data/validation_df_embeddings_flaubert.csv"
+    TEST_PATH = "data/test_df_embeddings_flaubert.csv"
 
     # Perfom only on the validation set for proper ROUGE score (avoid overfitting on train data)
     _, validation_df, _ = load_data(TRAIN_PATH, VALIDATION_PATH, TEST_PATH)
@@ -213,8 +377,6 @@ def pca_analysis_rouge(save: bool = False):
         validation_df.to_csv("data/validation_df_rouge.csv", index=False)
 
     # Scale colors from BLUE (0) to RED (1) for the ROUGE score
-    max_score = validation_df["rouge_score"].max()
-    min_score = 0
     validation_df["color"] = validation_df["rouge_score"]
 
     pca = PCA(n_components=2)
@@ -277,7 +439,9 @@ if __name__ == "__main__":
     # generate_labels()
     # labels_analysis()
     # add_embeddings()
+    # generate_visualization()
+    # generate_visualization_rouge()
     # pca_analysis()
     # add_generated_title()
-    pca_analysis_rouge()
+    # pca_analysis_rouge()
     pass
