@@ -1,9 +1,13 @@
-"""Load the different HuggingFace models"""
+"""Load the different HuggingFace models.
+We include their raw scores on the validation dataset before training.
+"""
 
 from transformers import (
     AutoTokenizer,
     AutoModelForSeq2SeqLM,
     DataCollatorForSeq2Seq,
+    RobertaTokenizerFast,
+    EncoderDecoderModel,
 )
 
 
@@ -29,6 +33,8 @@ def mT5_multilingual_XLSum():
     >>>     output_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False
     >>> )
     """
+    # Average Rouge Score: 0.20527144694133828
+
     model_name = "csebuetnlp/mT5_multilingual_XLSum"
     model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
     tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -43,22 +49,48 @@ def mT5_multilingual_XLSum():
 
 
 def mbart_mlsum_automatic_summarization():
+    # Average Rouge Score: 0.20474941262252572
     return simple_load("lincoln/mbart-mlsum-automatic-summarization")
 
 
 def barthez_orangesum_title():
+    # Average Rouge Score: 0.17222983224367533
     return simple_load("moussaKam/barthez-orangesum-title")
 
 
 def t5_base_fr_sum_cnndm():
+    # Average Rouge Score: 0.20781614162134016
     return simple_load("plguillou/t5-base-fr-sum-cnndm")
 
 
 def flan_t5_large_dialogsum_fr():
+    # Average Rouge Score: 0.15820893720532173
+    # TOO LARGE
     return simple_load("bofenghuang/flan-t5-large-dialogsum-fr")
 
 
-# TODO
-# https://huggingface.co/mrm8488/camembert2camembert_shared-finetuned-french-summarization
-# https://huggingface.co/csebuetnlp/mT5_m2m_crossSum
-# https://huggingface.co/hhhhzy/deltalm-base-xlsum
+def camember2camember():
+    """
+    >>> def generate_summary(text):
+    >>>     inputs = tokenizer([text], padding="max_length",
+    >>>                        truncation=True, max_length=512, return_tensors="pt")
+    >>>     input_ids = inputs.input_ids.to(device)
+    >>>     attention_mask = inputs.attention_mask.to(device)
+    >>>     output = model.generate(input_ids, attention_mask=attention_mask)
+    >>>     return tokenizer.decode(output[0], skip_special_tokens=True)
+    """
+    # Average Rouge Score: 0.20582048179444393
+    model_name = "mrm8488/camembert2camembert_shared-finetuned-french-summarization"
+    model = EncoderDecoderModel.from_pretrained(model_name)
+    tokenizer = RobertaTokenizerFast.from_pretrained(model_name)
+
+    return model, tokenizer
+
+
+def mT5_m2m_crossSum():
+    # Average Rouge Score: 0.20217067318519055
+    model_name = "csebuetnlp/mT5_m2m_crossSum"
+    tokenizer = AutoTokenizer.from_pretrained(model_name, use_fast=False)
+    model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+
+    return model, tokenizer

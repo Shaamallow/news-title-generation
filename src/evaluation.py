@@ -6,7 +6,7 @@ from tqdm import tqdm
 from src.metrics import Tokenizer
 
 
-def t5_summary(
+def summary(
     text: pd.Series,
     tokenizer: Tokenizer,
     model: AutoModelForSeq2SeqLM,
@@ -39,6 +39,7 @@ def t5_summary(
             input_text,
             max_length=64,
             early_stopping=True,
+            num_beams=4,
             num_return_sequences=1,
         )
         for idx, out in enumerate(output):
