@@ -20,6 +20,6 @@ def do_test(model: AutoModelForSeq2SeqLM, tokenizer: Tokenizer, batch_size: int 
         validation_df["text"], tokenizer, model, batch_size=batch_size
     )
 
-    average_rouge = average_rouge_score(summaries, validation_df["title"])
+    average_rouge = average_rouge_score(summaries, validation_df["titles"])
 
     print(f"Average Rouge Score: {average_rouge}")
