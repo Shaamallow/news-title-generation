@@ -34,3 +34,30 @@ def mT5_multilingual_XLSum():
     )
 
     return model, tokenizer, data_collator
+
+
+def mbart_mlsum_automatic_summarization():
+    model_name = "lincoln/mbart-mlsum-automatic-summarization"
+
+    model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+    return model, tokenizer
+
+
+def barthez_orangesum_title():
+    model_name = "moussaKam/barthez-orangesum-title"
+
+    model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+    return model, tokenizer
+
+
+def t5_base_fr_sum_cnndm():
+    model_name = "plguillou/t5-base-fr-sum-cnndm"
+
+    model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+    return model, tokenizer
