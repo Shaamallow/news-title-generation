@@ -13,6 +13,12 @@ def device():
     return "cuda" if is_available() else "cpu"
 
 
+def simple_load(model_name: str):
+    return AutoModelForSeq2SeqLM.from_pretrained(
+        model_name
+    ), AutoTokenizer.from_pretrained(model_name)
+
+
 def mT5_multilingual_XLSum():
     """Example use:
 
@@ -37,27 +43,22 @@ def mT5_multilingual_XLSum():
 
 
 def mbart_mlsum_automatic_summarization():
-    model_name = "lincoln/mbart-mlsum-automatic-summarization"
-
-    model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-
-    return model, tokenizer
+    return simple_load("lincoln/mbart-mlsum-automatic-summarization")
 
 
 def barthez_orangesum_title():
-    model_name = "moussaKam/barthez-orangesum-title"
-
-    model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-
-    return model, tokenizer
+    return simple_load("moussaKam/barthez-orangesum-title")
 
 
 def t5_base_fr_sum_cnndm():
-    model_name = "plguillou/t5-base-fr-sum-cnndm"
+    return simple_load("plguillou/t5-base-fr-sum-cnndm")
 
-    model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-    return model, tokenizer
+def flan_t5_large_dialogsum_fr():
+    return simple_load("bofenghuang/flan-t5-large-dialogsum-fr")
+
+
+# TODO
+# https://huggingface.co/mrm8488/camembert2camembert_shared-finetuned-french-summarization
+# https://huggingface.co/csebuetnlp/mT5_m2m_crossSum
+# https://huggingface.co/hhhhzy/deltalm-base-xlsum
