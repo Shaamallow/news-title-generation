@@ -6,3 +6,6 @@ torch[transformers]
 datasets
 sentencepiece
 protobuf
+scikit-learn
+sacremoses
+matplotlib
