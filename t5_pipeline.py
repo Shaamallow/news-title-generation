@@ -30,9 +30,9 @@ VALIDATION_PATH = "./data/validation.csv"
 TEST_PATH = "./data/test_text.csv"
 
 # BASE MODEL
-BASE_MODEL = "t5-small"
+BASE_MODEL = "facebook/bart-base"
 # AVAILABLE_MODELS = ["t5-small", "t5-base", "t5-large", "t5-3b", "t5-11b"]
-CHECKPOINT_NUMBER = 2676
+CHECKPOINT_NUMBER = 2670
 
 
 def load_data(
@@ -217,18 +217,22 @@ def train_model_from_checkpoint(model_checkpoint: str):
     model = AutoModelForSeq2SeqLM.from_pretrained(model_checkpoint)
     print(f"Model Loaded : {model_checkpoint}")
 
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    model = model.to(device)
+
     batch_size = 8
     model_name = model_checkpoint.split("/")[-1]
     training_args = Seq2SeqTrainingArguments(
-        output_dir=f"./outputs/{model_name}-finetuned",
+        output_dir=f"./outputs/{model_name}-finetuned-3",
         per_device_train_batch_size=batch_size,
         per_device_eval_batch_size=batch_size,
         predict_with_generate=True,
         evaluation_strategy="epoch",
-        num_train_epochs=5,
+        num_train_epochs=1,
         eval_steps=2,
-        save_steps=2,
+        save_steps=10,
         warmup_steps=1,
+        fp16=True,
         # overwrite_output_dir=True,
         save_total_limit=2,
     )
@@ -271,7 +275,7 @@ def t5_summary(
     text: pd.Series,
     t5_tokenizer: PreTrainedTokenizer,
     model: AutoModelForSeq2SeqLM,
-    batch_size: int = 64,
+    batch_size: int = 16,
 ):
     """Generate summaries using the T5 model
 
@@ -322,7 +326,7 @@ def submission_from_df(model, t5_tokenizer, test_df):
     t5_summary_kaggle = t5_summary(test_df["text"], t5_tokenizer, model)
     t5_summary_kaggle_df = pd.DataFrame(t5_summary_kaggle, columns=["ID", "titles"])
     t5_summary_kaggle_df.to_csv(
-        "./outputs/submissions//t5_summary_kaggle.csv", index=False
+        "./outputs/submissions/bart_summary_kaggle_trained_2.csv", index=False
     )
 
 
@@ -357,10 +361,13 @@ def submission_from_pretrained(
 def load_model(model_checkpoint: str, checkpoint_number: int):
     """Load a model from a checkpoint"""
     t5_tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
+    # model_name = model_checkpoint.split("/")[-1]
     # model = AutoModelForSeq2SeqLM.from_pretrained(
-    #     f"./outputs/{model_checkpoint}-finetuned/checkpoint-{checkpoint_number}"
+    #     f"./outputs/{model_name}-finetuned-3/checkpoint-{checkpoint_number}"
     # )
-    model = AutoModelForSeq2SeqLM.from_pretrained("t5-small")  # Try using the base one.
+    model = AutoModelForSeq2SeqLM.from_pretrained(
+        "facebook/bart-base"
+    )  # Try using the base one.
     return model, t5_tokenizer
 
 
@@ -371,7 +378,7 @@ if __name__ == "__main__":
     train_df, validation_df, test_df = load_data(TRAIN_PATH, VALIDATION_PATH, TEST_PATH)
 
     # Train the model
-    # model, t5_tokenizer = train_model_from_checkpoint("t5-small")
+    # model, t5_tokenizer = train_model_from_checkpoint(BASE_MODEL)
     #
     # Load the model
     model, t5_tokenizer = load_model(BASE_MODEL, CHECKPOINT_NUMBER)
@@ -381,7 +388,10 @@ if __name__ == "__main__":
     # Generate the T5 summaries
     print("Generating summary....")
     t5_summaries = t5_summary(
-        validation_df["text"], t5_tokenizer, model, batch_size=64  # type: ignore
+        validation_df["text"],
+        t5_tokenizer,
+        model,
+        batch_size=16,  # type: ignore
     )
     print("Done.")
 
@@ -390,5 +400,5 @@ if __name__ == "__main__":
     print(f"T5 Rouge Score : {t5_rouge_score}")
 
     # Generate the submission
-    submission_from_df(model, t5_tokenizer, test_df)
-    submission_from_pretrained("t5-small", CHECKPOINT_NUMBER, test_df)
+    # submission_from_df(model, t5_tokenizer, test_df)
+    # submission_from_pretrained("t5-small", CHECKPOINT_NUMBER, test_df)
