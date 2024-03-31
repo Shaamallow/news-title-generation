@@ -1,9 +1,24 @@
 """Evaluate models and generate submissions"""
 
-from transformers import AutoModelForSeq2SeqLM
 import pandas as pd
 from tqdm import tqdm
+from transformers import AutoModelForSeq2SeqLM
+
 from src.metrics import Tokenizer
+
+
+def embeddings(text: pd.Series, toknizer: Tokenizer, batch_size: int = 16) -> pd.Series:
+    """
+    Generate embeddings using the given tokenizer and return the pd.Series of embeddings
+    """
+    embeddings = []
+
+    for i in tqdm(range(0, len(text), batch_size)):
+        batch = text[i : i + batch_size]
+        input_text = toknizer(batch.tolist(), padding=True, truncation=True).input_ids
+        embeddings.extend(input_text)
+
+    return pd.Series(embeddings)
 
 
 def summary(
